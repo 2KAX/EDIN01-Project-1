@@ -42,6 +42,32 @@
 
 \subsection{Exercise 1}
 
+Assume that we have a large number $N$ containing 25 digits that is a product of two 12 digits prime numbers $p$ and $q$ :
+$$N = pq$$
+
+We want to use trial division to find the factorization of $N$. Meaning that we will test for $n \in \{1,\dotsc,\lfloor\sqrt{N}\rfloor\}$ if the following expression is null :
+$$N \text{ mod } n$$
+
+Without any knowledge of the values of prime numbers we can compute a lower bound for the number of tests. As the prime factors have 12 digits they exceed $10^{12}$ and therefore we get :
+$$b_l = 10^{12}$$
+
+We can also compute an upper bound. As one of the prime factor has to be smaller than $\lfloor\sqrt{N}\rfloor$ and $N$ is 25 digits long we get :
+$$b_u = \lfloor\sqrt{10^{26}-1}\rfloor$$
+
+Assuming that the the number of tests performed over time is $\omega = 10^7 \text{ test/s}$ we get the following interval for the factorization time :
+
+\begin{table}[H]
+    \centering
+    \begin{tabular}{c|c|c}
+         & number of tests & factorization time \\
+        lower bound & $1,00*10^{12}$ & $1,00*10^{5} \text{ s } \approx 1.16 \text{ days}$ \\
+        upper bound & $ 1,00*10^{13}$ & $1,00*10^{6} \text{ s } \approx 11.6 \text{ days}$
+    \end{tabular}
+    \caption{Interval for factorization time}
+\end{table}
+
+The trial division method without knowledge of values for prime numbers can take quite a long time to perform factorization. To factorize a 25 digits long number can take days if both prime factors are 12 digits long.
+
 \subsection{Exercise 2}
 
 \section{More efficient methods}
