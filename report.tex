@@ -63,12 +63,34 @@ Assuming that the the number of tests performed over time is $\omega = 10^7 \tex
         lower bound & $1,00*10^{11}$ & $1,00*10^{4} \text{ s } \approx 2,78 \text{ hours}$ \\
         upper bound & $ 3,16*10^{12}$ & $3,16*10^{5} \text{ s } \approx 3,66 \text{ days}$
     \end{tabular}
-    \caption{Interval for factorization time}
+    \caption{Interval for factorization time without prime knowledge}
 \end{table}
 
 The trial division method without knowledge of values for prime numbers can take quite a long time to perform factorization. To factorize a 25 digits long number - if both prime factors are 12 digits long - can take from several hours to several days.
 
 \subsection{Exercise 2}
+
+Now let's assume that we have access to the knowledge of prime numbers. The new lower bound is :
+
+$$b_l'=\frac{b_l}{ln(b_l)}=3,95*10^9$$
+
+In the same way we can compute the new upper bound :
+
+$$b_u'=1,25506*\frac{b_u}{ln(b_u)}=1,38*10^{11}$$
+
+We therefore get this new following interval for the factorisation time :
+
+\begin{table}[H]
+    \centering
+    \begin{tabular}{c|c|c|c}
+         & number of tests & factorization time & Improvement \\
+        lower bound & $3,95*10^9$ & $3,95*10^{2} \text{ s } \approx 6,58 \text{ minutes}$ & $25,3$x faster \\
+        upper bound & $1,38*10^{11}$ & $1,38*10^{4} \text{ s } \approx 3,83 \text{ hours}$ & $22,9$x faster
+    \end{tabular}
+    \caption{Interval for factorization time with prime knowledge}
+\end{table}
+
+One of the prime numbers requires $\lceil\frac{b_u}{8*ln(2)}\rceil=6$ Bytes to be stored as the maximal value it can take is $b_u$. In order to store the slightly less than $b_u'$ prime numbers the storage required is around $827$GB. This would typically correspond to a storage price of roughly $700$ SEK, which is closer to student budget than big government grant.
 
 \section{More efficient methods}
 
