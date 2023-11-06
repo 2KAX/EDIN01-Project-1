@@ -25,7 +25,7 @@ def getPrimes(F):  #Function to obtain the elements in F, get the first F prime 
 def findFactors(rmodN, primes):
 	factors = []
 	fSmooth = False
-	binaryRow = np.zeros(len(primes))  #we will also return the binary row with 1s when a factor is present
+	binaryRow = np.zeros(len(primes),dtype=int)  #we will also return the binary row with 1s when a factor is present
 	curr = rmodN #number we want to factorize
 	i = 1
 	pr = primes[i]
@@ -34,7 +34,7 @@ def findFactors(rmodN, primes):
 		if curr % pr == 0: #check if factor
 			factors.append(pr) #if so add as factor and remove from number, pr is not changed as a number can be divided more than one time by same prime
 			curr = curr/pr
-			binaryRow[i] = 1 #factor is present -> 1 in binary row
+			binaryRow[i] = int(1) #factor is present -> 1 in binary row
 			if curr == 1:
 				fSmooth = True #if we got to 1 it means we succesfully factorized the number with the primes inside F which means the number is F-smooth
 				break
@@ -60,16 +60,22 @@ def createBinaryMatrix(N,F,primes):
 			if not fSmooth: #only add binary row if it is f smooth
 				continue
 			if len(M) == 0: #first row
-				M = binaryRow
+				M = np.array([binaryRow])
 			else:
-				if not ([binaryRow] in M.tolist()): ## NOT WORKING, KEEPS ADDING DUPLICATED ROWS (trying with N=323)   #add row if not already there
+				if not (np.any(np.all(M == binaryRow, axis=1))):  #add row if not already there 
 					M = np.vstack((M,binaryRow))
 	return M
 
+def solveEquation(M):
+	null_space = np.linalg.lstsq(M, np.zeros(M.shape[0]))[0] ## IN PROGRESS..
+
+	return x
+
 def factorize(N, F):
 	primes,B = getPrimes(F)
-	M = createBinaryMatrix(N,F,primes)   ## ENDED TRYING TO MAKE createBinaryMatrix work
-	return M,0
+	M = createBinaryMatrix(N,F,primes)
+	x = solveEquation(M)  ## ENDED TRYING TO FIND SOLUTION TO Mx=0
+	return x,0
 	#return p,q
 
 if __name__ == "__main__":
