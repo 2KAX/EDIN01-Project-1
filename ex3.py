@@ -34,7 +34,7 @@ def findFactors(rmodN, primes):
 		if curr % pr == 0: #check if factor
 			factors.append(pr) #if so add as factor and remove from number, pr is not changed as a number can be divided more than one time by same prime
 			curr = curr/pr
-			binaryRow[i] = int(1) #factor is present -> 1 in binary row
+			binaryRow[i] = (binaryRow[i] + 1) % 2 #factor is present and even-> 1 in binary row
 			if curr == 1:
 				fSmooth = True #if we got to 1 it means we succesfully factorized the number with the primes inside F which means the number is F-smooth
 				break
@@ -54,7 +54,7 @@ def createBinaryMatrix(N,F,primes):
 		k += 1
 		while M.shape[0] < L:
 			j += 1
-			r = int(np.floor(np.sqrt(k*N) + j)) #calculate r
+			r = int(np.floor(np.sqrt(k*N)) + j) #calculate r
 			res = r**2 % N #calculate r^2 mod N
 			factors,fSmooth,binaryRow = findFactors(res,primes) #get factors and binary row to add to M
 			if not fSmooth: #only add binary row if it is f smooth
