@@ -78,7 +78,7 @@ In the same way we can compute the new upper bound :
 
 $$b_u'=1,25506*\frac{b_u}{ln(b_u)}=1,38*10^{11}$$
 
-We therefore get this new following interval for the factorisation time :
+We therefore get this new following interval for the factorization time :
 
 \begin{table}[H]
     \centering
@@ -90,7 +90,9 @@ We therefore get this new following interval for the factorisation time :
     \caption{Interval for factorization time with prime knowledge}
 \end{table}
 
-One of the prime numbers requires $\lceil\frac{b_u}{8*ln(2)}\rceil=6$ Bytes to be stored as the maximal value it can take is $b_u$. In order to store the slightly less than $b_u'$ prime numbers the storage required is around $827$GB. This would typically correspond to a storage price of roughly $700$ SEK, which is closer to student budget than big government grant.
+Supposing the maximum amount of digits needed for the biggest possible prime number (which would correspond to the prime number at the position $b'_u$) is $b_u$ then the amount of bytes necessary to store this number can be calculated as $\lceil\frac{b_u}{8*ln(2)}\rceil=6$. If every prime number needs to be stored in 6 bytes then to store $b'_u$ primes a storage of $827$GB is required. This would typically correspond to a storage price of roughly $700$ SEK, which is closer to student budget than big government grant.
+
+% One of the prime numbers requires $\lceil\frac{b_u}{8*ln(2)}\rceil=6$ Bytes to be stored as the maximal value it can take is $b_u$. In order to store the slightly less than $b_u'$ prime numbers the storage required is around $827$GB. This would typically correspond to a storage price of roughly $700$ SEK, which is closer to student budget than big government grant.
 
 \section{More efficient methods}
 
