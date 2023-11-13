@@ -90,9 +90,11 @@ We therefore get this new following interval for the factorization time :
     \caption{Interval for factorization time with prime knowledge}
 \end{table}
 
-Supposing the maximum amount of digits needed for the biggest possible prime number (which would correspond to the prime number at the position $b'_u$) is $b_u$ then the amount of bytes necessary to store this number can be calculated as $\lceil\frac{b_u}{8*ln(2)}\rceil=6$. If every prime number needs to be stored in 6 bytes then to store $b'_u$ primes a storage of $827$GB is required. This would typically correspond to a storage price of roughly $700$ SEK, which is closer to student budget than big government grant.
-
-% One of the prime numbers requires $\lceil\frac{b_u}{8*ln(2)}\rceil=6$ Bytes to be stored as the maximal value it can take is $b_u$. In order to store the slightly less than $b_u'$ prime numbers the storage required is around $827$GB. This would typically correspond to a storage price of roughly $700$ SEK, which is closer to student budget than big government grant.
+Let's compute a rough estimate of the storage required to store the prime numbers. Suppose that we encode numbers on $m$ bytes then we would like $m$ to be big enough to store the biggest possible prime number that we would store (which would correspond to the prime number at the position $b'_u$). This prime number is going to be smaller than $b_u$. Therefore we get the following equation.
+$$2^{8m} > b_u$$
+Then the amount of bytes necessary to store this number can be calculated as follows.
+$$\lceil\frac{ln(b_u)}{8*ln(2)}\rceil=6$$
+If every prime number needs to be stored in 6 bytes then to store $b'_u$ primes a storage of $6*b'_u = 828$ GB is required. This would typically correspond to a storage price of roughly $700$ SEK, which is closer to student budget than big government grant.
 
 \section{More efficient methods}
 
