@@ -7,7 +7,7 @@ import pdb
 
 def getPrimes(F):  #Function to obtain the elements in F, get the first F prime numbers
 	primes = []
-	pr = 1  #pr: candidate prime number, starting with 1
+	pr = 2  #pr: candidate prime number, starting with 2
 	isPrime = True
 	while len(primes) < F: #while we have less than F numbers
 		for i in range(2,int(np.floor(np.sqrt(pr)))+1):  #check numbers from 2 to √pr
@@ -27,7 +27,7 @@ def findFactors(rmodN, primes):
 	fSmooth = False
 	binaryRow = np.zeros(len(primes),dtype=int)  #we will also return the binary row with 1s when a factor is present
 	curr = rmodN #number we want to factorize
-	i = 1
+	i = 0
 	pr = primes[i]
 	while i < len(primes):
 		pr = primes[i] #get prime
@@ -79,17 +79,72 @@ def factorize(N, F):
 	#return p,q
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Script that finds 2 prime factors of N")
-    parser.add_argument("--N", required=True, type=int)
-    args = parser.parse_args()
 
-    N = args.N
+	parser = argparse.ArgumentParser(description="Script that finds 2 prime factors of N")
+	parser.add_argument("--N", required=True, type=int)
+	parser.add_argument("--test", required=False, type=bool)
+	args = parser.parse_args()
+	N = args.N
+	test = args.test
 
-    p,q = factorize(N, 10)
+	if not test :
 
-    print('N = ',p,' x ',q)
+		print("Running the program on N = " + str(N))
 
-    # if __name__ == "__main__":
-#   N = sys.argv[1]
-#   p,q = factorize(N)
-#   print('N = ',p,' x ',q)
+		#p,q = factorize(N, 10)
+		#print('N = ',p,' x ',q)
+
+	else :
+
+		print("Running tests")
+
+		print("===== GETPRIMES =====")
+		print()
+
+		(factorbase,boundary) = getPrimes(100)
+		print("factorbase : " + str(factorbase))
+		print("boundary : " + str(boundary))
+		print()
+
+		print("===== FINDFACTORS =====")
+		print()
+
+		(factorbase,boundary) = getPrimes(4)
+		print("factorbase : " + str(factorbase))
+		print()
+
+		print("Number : 60")
+		factors, fSmooth, binaryRow = findFactors(60,factorbase)
+		print("factors : " + str(factors))
+		print("fSmooth : " + str(fSmooth))
+		print("binaryRow : " + str(binaryRow))
+		print()
+
+		print("Number : 17")
+		factors, fSmooth, binaryRow = findFactors(17,factorbase)
+		print("factors : " + str(factors))
+		print("fSmooth : " + str(fSmooth))
+		print("binaryRow : " + str(binaryRow))
+		print()
+
+		print("Number : 6")
+		factors, fSmooth, binaryRow = findFactors(6,factorbase)
+		print("factors : " + str(factors))
+		print("fSmooth : " + str(fSmooth))
+		print("binaryRow : " + str(binaryRow))
+		print()
+
+		print("Number : 1")
+		factors, fSmooth, binaryRow = findFactors(1,factorbase)
+		print("factors : " + str(factors))
+		print("fSmooth : " + str(fSmooth))
+		print("binaryRow : " + str(binaryRow))
+		print()
+
+		print("===== BINARY MATRIX =====")
+		print()
+
+		F = 10
+		(factorbase,boundary) = getPrimes(F)
+		M = createBinaryMatrix(323,F,factorbase)
+		print(str(M))
