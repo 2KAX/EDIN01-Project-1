@@ -1,7 +1,6 @@
-import sys
 import argparse
 import numpy as np
-import pdb
+from tabulate import tabulate
 
 
 
@@ -20,7 +19,6 @@ def getPrimes(F):  #Function to obtain the elements in F, get the first F prime 
 			isPrime = True
 		pr += 1
 	return primes, pr #returns array of prime numbers and the smooth boundary B
-
 
 def findFactors(rmodN, primes):
 	factors = []
@@ -42,109 +40,92 @@ def findFactors(rmodN, primes):
 			i += 1 #if not a factor we continue on prime list
 	return factors, fSmooth, binaryRow
 
+def getNextPair(pair) :
+	# This function goes through all pairs in NxN : (0,0) -> (1,0) -> (0,1) -> (2,0) -> (1,1) -> (0,2) -> (3,0) -> ...
+	(k,j) = pair
+	if k == 0 :
+		return (k+j+1,0)
+	else :
+		return (k-1,j+1)
 
-def createBinaryMatrix(N,F,primes):
-	M = np.array([]) #Empty binary matrix
-	L = F + 2
+def createBinaryMatrix(numberToFactorize,factorbase) :
+	# This functions create a binary matrix with  len(factorbase)+2  rows.
 
-	k = 0
-	j = 0
+	binaryMatrix = np.array([])
+	parameters = []
+	numbers = []
+	remainders = []
+	remainderDecompositions = []
+	
+	numberOfBinaryRowsNeeded = len(factorbase) + 2
 
-	while M.shape[0] < L: #goes through various j and k
-		k += 1
-		while M.shape[0] < L:
-			j += 1
-			r = int(np.floor(np.sqrt(k*N)) + j) #calculate r
-			res = r**2 % N #calculate r^2 mod N
-			factors,fSmooth,binaryRow = findFactors(res,primes) #get factors and binary row to add to M
-			if not fSmooth: #only add binary row if it is f smooth
-				continue
-			if len(M) == 0: #first row
-				M = np.array([binaryRow])
-			else:
-				if not (np.any(np.all(M == binaryRow, axis=1))):  #add row if not already there 
-					M = np.vstack((M,binaryRow))
-	return M
+	parameterPair = (0,0)
+
+	while binaryMatrix.shape[0] < numberOfBinaryRowsNeeded : # Until enough rows are included in the binary matrix
+
+		# Test if the next number is smooth
+		parameterPair = getNextPair(parameterPair)
+		candidate = int(np.floor(np.sqrt(parameterPair[0]*numberToFactorize)) + parameterPair[1])
+		remainder = candidate**2 % numberToFactorize
+		factors,isRemainderSmooth,binaryRow = findFactors(remainder,factorbase)
+		if not isRemainderSmooth :
+			continue
+
+		# Test if the binary row is already in the binary matrix
+		if len(binaryMatrix) > 0 and (np.any(np.all(binaryMatrix == binaryRow, axis=1))):  #add row if not already there 
+			continue
+
+		if len(binaryMatrix) == 0:
+			binaryMatrix = np.array([binaryRow])
+		else :
+			binaryMatrix = np.vstack((binaryMatrix,binaryRow))
+
+		parameters.append(parameterPair)
+		numbers.append(candidate)
+		remainders.append(remainder)
+		remainderDecompositions.append(factors)
+
+		
+	return binaryMatrix, parameters, numbers, remainders, remainderDecompositions
 
 def solveEquation(M):
-	null_space = np.linalg.lstsq(M, np.zeros(M.shape[0]))[0] ## IN PROGRESS..
+	# This function return several different solutions to the equation M^T * x = 0 where sz(M) = (F+2,F)
+	# null_space = np.linalg.lstsq(M, np.zeros(M.shape[0]))[0]
+	#print(np.transpose(M))
+	# print(str(np.linalg.lstsq(np.transpose(M), np.zeros(M.shape[1]))))
+	pass
 
-	return x
+def factorize(numberToFactorize, cardinalOfFactorbase, showSteps = False):
 
-def factorize(N, F):
-	primes,B = getPrimes(F)
-	M = createBinaryMatrix(N,F,primes)
-	x = solveEquation(M)  ## ENDED TRYING TO FIND SOLUTION TO Mx=0
-	return x,0
-	#return p,q
+	factorbase,factorbaseBoudary = getPrimes(cardinalOfFactorbase)
+	if showSteps :
+		print("Factorbase : " + str(factorbase))
+
+	binaryMatrix, parameters, numbers, remainders, remainderDecompositions = createBinaryMatrix(numberToFactorize,factorbase)
+	if showSteps :
+		print("Data coresponding to the binary matrix :")
+		data = zip(parameters, numbers, remainders, remainderDecompositions)
+		headers = ["(k,j)", "r", "r**2 mod N", "decomposition"]
+		print(tabulate(data, headers = headers, tablefmt="fancy_grid"))
+		print("Binary matrix :")
+		print(str(binaryMatrix))
+
+	# TBC solve equation x*binaryMatrix = 0
+	pass
 
 if __name__ == "__main__":
 
 	parser = argparse.ArgumentParser(description="Script that finds 2 prime factors of N")
 	parser.add_argument("--N", required=True, type=int)
-	parser.add_argument("--test", required=False, type=bool)
 	args = parser.parse_args()
 	N = args.N
-	test = args.test
 
-	if not test :
+	N = 323 # tmp test
+	F = 5
 
-		print("Running the program on N = " + str(N))
+	print("Running the program on N = " + str(N))
 
-		#p,q = factorize(N, 10)
-		#print('N = ',p,' x ',q)
+	factorize(N, F, showSteps = True)
 
-	else :
-
-		print("Running tests")
-
-		print("===== GETPRIMES =====")
-		print()
-
-		(factorbase,boundary) = getPrimes(100)
-		print("factorbase : " + str(factorbase))
-		print("boundary : " + str(boundary))
-		print()
-
-		print("===== FINDFACTORS =====")
-		print()
-
-		(factorbase,boundary) = getPrimes(4)
-		print("factorbase : " + str(factorbase))
-		print()
-
-		print("Number : 60")
-		factors, fSmooth, binaryRow = findFactors(60,factorbase)
-		print("factors : " + str(factors))
-		print("fSmooth : " + str(fSmooth))
-		print("binaryRow : " + str(binaryRow))
-		print()
-
-		print("Number : 17")
-		factors, fSmooth, binaryRow = findFactors(17,factorbase)
-		print("factors : " + str(factors))
-		print("fSmooth : " + str(fSmooth))
-		print("binaryRow : " + str(binaryRow))
-		print()
-
-		print("Number : 6")
-		factors, fSmooth, binaryRow = findFactors(6,factorbase)
-		print("factors : " + str(factors))
-		print("fSmooth : " + str(fSmooth))
-		print("binaryRow : " + str(binaryRow))
-		print()
-
-		print("Number : 1")
-		factors, fSmooth, binaryRow = findFactors(1,factorbase)
-		print("factors : " + str(factors))
-		print("fSmooth : " + str(fSmooth))
-		print("binaryRow : " + str(binaryRow))
-		print()
-
-		print("===== BINARY MATRIX =====")
-		print()
-
-		F = 10
-		(factorbase,boundary) = getPrimes(F)
-		M = createBinaryMatrix(323,F,factorbase)
-		print(str(M))
+	#p,q = factorize(N, 10)
+	#print('N = ',p,' x ',q)
