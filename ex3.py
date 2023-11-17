@@ -57,7 +57,7 @@ def createBinaryMatrix(numberToFactorize,factorbase) :
 	remainders = []
 	remainderDecompositions = []
 	
-	numberOfBinaryRowsNeeded = len(factorbase) + 2
+	numberOfBinaryRowsNeeded = len(factorbase) + 4
 
 	parameterPair = (0,0)
 
@@ -88,12 +88,82 @@ def createBinaryMatrix(numberToFactorize,factorbase) :
 		
 	return binaryMatrix, parameters, numbers, remainders, remainderDecompositions
 
-def solveEquation(M):
+def solveEquation(binaryMatrix):
 	# This function return several different solutions to the equation M^T * x = 0 where sz(M) = (F+2,F)
-	# null_space = np.linalg.lstsq(M, np.zeros(M.shape[0]))[0]
-	#print(np.transpose(M))
-	# print(str(np.linalg.lstsq(np.transpose(M), np.zeros(M.shape[1]))))
-	pass
+	
+	linearCombinations = np.eye(binaryMatrix.shape[0])
+	indexLastFrozenRow = -1
+	indexCurrentPrime = 0
+
+	while indexCurrentPrime < binaryMatrix.shape[1] :
+		# Find a row that is not frozen and has 1 as value for the current prime and place it under the last frozen row and freeze it
+		# (if no row coresponds then skip the next step and increase the index of the current prime)
+		for rowIndex in range(indexLastFrozenRow+1,binaryMatrix.shape[0]) :
+			if binaryMatrix[rowIndex][indexCurrentPrime] == 1 :
+				break
+		if binaryMatrix[rowIndex][indexCurrentPrime] != 1 :
+			indexCurrentPrime += 1
+			continue
+
+		tmp = binaryMatrix[indexLastFrozenRow+1].copy()
+		binaryMatrix[indexLastFrozenRow+1] = binaryMatrix[rowIndex].copy()
+		binaryMatrix[rowIndex] = tmp.copy()
+
+		tmp = linearCombinations[indexLastFrozenRow+1].copy()
+		linearCombinations[indexLastFrozenRow+1] = linearCombinations[rowIndex].copy()
+		linearCombinations[rowIndex] = tmp.copy()
+
+		indexLastFrozenRow += 1
+
+		# For all the the none frozen rows, if they have 1 as value for the current prime then add the last frozen row to it
+		for rowIndex in range(indexLastFrozenRow+1,binaryMatrix.shape[0]) :
+			if binaryMatrix[rowIndex][indexCurrentPrime] == 1 :
+				binaryMatrix[rowIndex] += binaryMatrix[indexLastFrozenRow].copy()
+				binaryMatrix[rowIndex] %= 2
+				linearCombinations[rowIndex] += linearCombinations[indexLastFrozenRow].copy()
+
+	solutions = linearCombinations[indexLastFrozenRow+1:binaryMatrix.shape[0]]%2
+	return solutions
+
+def extractResults(solutions, r, remainders, remainderDecompositions) :
+	xList = []
+	xDecompositionList = []
+	xSquaredList = []
+	ySquaredList = []
+	ySquaredDecompositionList = []
+	yList = []
+	for solution in solutions :
+		x = 1
+		xDecomposition = []
+		xSquared = 1
+		ySquared = 1
+		ySquaredDecomposition = []
+		y = 1
+		for index in range(solution.shape[0]) :
+			if solution[index] != 1 :
+				continue
+			x *= r[index]
+			xDecomposition.append(r[index])
+			xSquared *= r[index]**2
+			ySquared *= remainders[index]
+			ySquaredDecomposition += remainderDecompositions[index].copy()
+		ySquaredDecomposition.sort()
+		for factorIndex in range(0,len(ySquaredDecomposition),2) :
+			y *= ySquaredDecomposition[factorIndex]
+		xList.append(x)
+		xDecompositionList.append(xDecomposition)
+		xSquaredList.append(xSquared)
+		ySquaredList.append(ySquared)
+		ySquaredDecompositionList.append(ySquaredDecomposition)
+		yList.append(y)
+
+	return xList, xDecompositionList, xSquaredList, ySquaredList, ySquaredDecompositionList, yList
+
+def gcd(a,b) :
+	if a % b == 0 :
+		return b
+	return gcd(b, a%b)
+
 
 def factorize(numberToFactorize, cardinalOfFactorbase, showSteps = False):
 
@@ -101,31 +171,46 @@ def factorize(numberToFactorize, cardinalOfFactorbase, showSteps = False):
 	if showSteps :
 		print("Factorbase : " + str(factorbase))
 
-	binaryMatrix, parameters, numbers, remainders, remainderDecompositions = createBinaryMatrix(numberToFactorize,factorbase)
+	binaryMatrix, parameters, r, remainders, remainderDecompositions = createBinaryMatrix(numberToFactorize,factorbase)
 	if showSteps :
 		print("Data coresponding to the binary matrix :")
-		data = zip(parameters, numbers, remainders, remainderDecompositions)
+		data = zip(parameters, r, remainders, remainderDecompositions)
 		headers = ["(k,j)", "r", "r**2 mod N", "decomposition"]
 		print(tabulate(data, headers = headers, tablefmt="fancy_grid"))
 		print("Binary matrix :")
 		print(str(binaryMatrix))
+	
+	solutions = solveEquation(binaryMatrix)
+	xList, xDecompositionList, xSquaredList, ySquaredList, ySquaredDecompositionList, yList = extractResults(solutions, r, remainders, remainderDecompositions)
+	if showSteps :
+		print("Data coresponding to the solutions :")
+		data = zip(xList, xDecompositionList, xSquaredList, ySquaredList, ySquaredDecompositionList, yList)
+		headers = ["x", "decomposition of x", "x**2", "y**2", "decomposition of y**2", "y"]
+		print(tabulate(data, headers = headers, tablefmt="fancy_grid"))
 
-	# TBC solve equation x*binaryMatrix = 0
-	pass
+	for solutionIndex in range(solutions.shape[0]) :
+		if xList[solutionIndex] - yList[solutionIndex] == 0 :
+			continue
+		p = gcd(numberToFactorize, xList[solutionIndex] - yList[solutionIndex])
+		if p == 1 or p == numberToFactorize :
+			continue
+		q = numberToFactorize // p
+		break
+	if showSteps :
+		print("Factorisation :")
+		print(str(numberToFactorize) + " = " + str(p) + " x " + str(q))
+
+	return (p,q)
 
 if __name__ == "__main__":
 
 	parser = argparse.ArgumentParser(description="Script that finds 2 prime factors of N")
 	parser.add_argument("--N", required=True, type=int)
+	parser.add_argument("--F", required=True, type=int)
 	args = parser.parse_args()
 	N = args.N
-
-	N = 323 # tmp test
-	F = 5
+	F = args.F
 
 	print("Running the program on N = " + str(N))
 
 	factorize(N, F, showSteps = True)
-
-	#p,q = factorize(N, 10)
-	#print('N = ',p,' x ',q)
