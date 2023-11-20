@@ -21,9 +21,14 @@ def getPrimes(F):  #Function to obtain the elements in F, get the first F prime 
 	return primes, pr #returns array of prime numbers and the smooth boundary B
 
 def findFactors(rmodN, primes):
+
 	factors = []
 	fSmooth = False
 	binaryRow = np.zeros(len(primes),dtype=int)  #we will also return the binary row with 1s when a factor is present
+
+	if rmodN == 0 :
+		return factors, fSmooth, binaryRow
+
 	curr = rmodN #number we want to factorize
 	i = 0
 	pr = primes[i]
@@ -49,7 +54,7 @@ def getNextPair(pair) :
 		return (k-1,j+1)
 
 def createBinaryMatrix(numberToFactorize,factorbase) :
-	# This functions create a binary matrix with  len(factorbase)+2  rows.
+	# This functions create a binary matrix with  len(factorbase)+4  rows.
 
 	binaryMatrix = np.array([])
 	parameters = []
@@ -61,7 +66,13 @@ def createBinaryMatrix(numberToFactorize,factorbase) :
 
 	parameterPair = (0,0)
 
+	trialsSinceSmoothRemainderFound = 0
 	while binaryMatrix.shape[0] < numberOfBinaryRowsNeeded : # Until enough rows are included in the binary matrix
+		
+		trialsSinceSmoothRemainderFound += 1
+		if trialsSinceSmoothRemainderFound > 10000 :
+			print("Timeout Error : more than 10000 trials since the last smooth remainder was found, consider increasing the size of the factorbase")
+			break
 
 		# Test if the next number is smooth
 		parameterPair = getNextPair(parameterPair)
@@ -74,6 +85,8 @@ def createBinaryMatrix(numberToFactorize,factorbase) :
 		# Test if the binary row is already in the binary matrix
 		if len(binaryMatrix) > 0 and (np.any(np.all(binaryMatrix == binaryRow, axis=1))):  #add row if not already there 
 			continue
+
+		trialsSinceSmoothRemainderFound = 0
 
 		if len(binaryMatrix) == 0:
 			binaryMatrix = np.array([binaryRow])
@@ -164,13 +177,14 @@ def gcd(a,b) :
 		return b
 	return gcd(b, a%b)
 
-
 def factorize(numberToFactorize, cardinalOfFactorbase, showSteps = False):
 
+	print("Generating factorbase...")
 	factorbase,factorbaseBoudary = getPrimes(cardinalOfFactorbase)
 	if showSteps :
 		print("Factorbase : " + str(factorbase))
-
+	
+	print("Generating binary matrix...")
 	binaryMatrix, parameters, r, remainders, remainderDecompositions = createBinaryMatrix(numberToFactorize,factorbase)
 	if showSteps :
 		print("Data coresponding to the binary matrix :")
@@ -180,6 +194,7 @@ def factorize(numberToFactorize, cardinalOfFactorbase, showSteps = False):
 		print("Binary matrix :")
 		print(str(binaryMatrix))
 	
+	print("Solving  Mx=0...")
 	solutions = solveEquation(binaryMatrix)
 	xList, xDecompositionList, xSquaredList, ySquaredList, ySquaredDecompositionList, yList = extractResults(solutions, r, remainders, remainderDecompositions)
 	if showSteps :
@@ -187,7 +202,9 @@ def factorize(numberToFactorize, cardinalOfFactorbase, showSteps = False):
 		data = zip(xList, xDecompositionList, xSquaredList, ySquaredList, ySquaredDecompositionList, yList)
 		headers = ["x", "decomposition of x", "x**2", "y**2", "decomposition of y**2", "y"]
 		print(tabulate(data, headers = headers, tablefmt="fancy_grid"))
-
+	
+	print("Extracting solution...")
+	isSolutionFound = False
 	for solutionIndex in range(solutions.shape[0]) :
 		if xList[solutionIndex] - yList[solutionIndex] == 0 :
 			continue
@@ -195,7 +212,11 @@ def factorize(numberToFactorize, cardinalOfFactorbase, showSteps = False):
 		if p == 1 or p == numberToFactorize :
 			continue
 		q = numberToFactorize // p
+		isSolutionFound = True
 		break
+	if not isSolutionFound :
+		print("Error : None of the pairs of squares resulted in a factorization")
+		return (numberToFactorize, 1)
 	if showSteps :
 		print("Factorisation :")
 		print(str(numberToFactorize) + " = " + str(p) + " x " + str(q))
@@ -207,10 +228,12 @@ if __name__ == "__main__":
 	parser = argparse.ArgumentParser(description="Script that finds 2 prime factors of N")
 	parser.add_argument("--N", required=True, type=int)
 	parser.add_argument("--F", required=True, type=int)
+	parser.add_argument("--showSteps", required=False, type=bool)
 	args = parser.parse_args()
 	N = args.N
 	F = args.F
+	showSteps = args.showSteps
 
-	print("Running the program on N = " + str(N))
+	print("Running the factorization program on N = " + str(N))
 
-	factorize(N, F, showSteps = True)
+	print(factorize(N, F, showSteps))

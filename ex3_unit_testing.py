@@ -46,6 +46,20 @@ print("fSmooth : " + str(fSmooth))
 print("binaryRow : " + str(binaryRow))
 print()
 
+print("Number : 0")
+factors, fSmooth, binaryRow = findFactors(0,factorbase)
+print("factors : " + str(factors))
+print("fSmooth : " + str(fSmooth))
+print("binaryRow : " + str(binaryRow))
+print()
+
+print("Number : 121")
+factors, fSmooth, binaryRow = findFactors(121,factorbase)
+print("factors : " + str(factors))
+print("fSmooth : " + str(fSmooth))
+print("binaryRow : " + str(binaryRow))
+print()
+
 print("===== BINARY MATRIX =====")
 print()
 
