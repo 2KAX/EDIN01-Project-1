@@ -23,6 +23,7 @@
 
 \setlength{\parindent}{0pt}
 \usepackage{geometry} % Flexible and complete interface to document dimensions
+\usepackage{todonotes}
 \geometry{hmargin=2.5cm,vmargin=2.5cm}
 
 \title{EDIN01 Cryptography \\ Project 1}
@@ -36,7 +37,6 @@
 
 \newpage
 
-\section{Introduction}
 
 \section{Trial division}
 
@@ -96,13 +96,175 @@ Then the amount of bytes necessary to store this number can be calculated as fol
 $$\lceil\frac{ln(b_u)}{8*ln(2)}\rceil=6$$
 If every prime number needs to be stored in 6 bytes then to store $b'_u$ primes a storage of $6*b'_u = 828$ GB is required. This would typically correspond to a storage price of roughly $700$ SEK, which is closer to student budget than big government grant.
 
-\section{More efficient methods}
+\section{More efficient methods - The Quadratic Sieve algorithm}
 
 \subsection{Exercise 3}
 
-\subsection{Exercise 4}
+In order to obtain an efficient factorization the quadratic sieve algorithm is introduced. In this exercise a version of the algorithm was coded in order to obtain the factorization of the following number:
 
-\section{The Quadratic Sieve algorithm}
+$$N = 248163779253588348739117$$
+
+The proposed solution is now presented. When the code is ran, 2 inputs must be provided: N, the number to factorize and F, the factor base. The first step is to calculate every element in the factor base:
+
+\begin{verbatim}
+    factorbase,factorbaseBoudary = getPrimes(cardinalOfFactorbase)
+\end{verbatim}
+
+The function \textit{\textbf{getPrimes}} returns an array of length F with every prime number from 2 until the desired length is reached. In order to do this each number (called $pr$ in the code) is checked to be a prime, this is, every number from 2 until $\sqrt{pr}$ should be non-divisible by $pr$. If the number is prime it is added to the final array.
+
+\begin{verbatim}
+    #Function to obtain the elements in F, get the first F prime numbers
+    def getPrimes(F):  
+        primes = []
+        pr = 2  #pr: candidate prime number, starting with 2
+        isPrime = True
+        while len(primes) < F: #while we have less than F numbers
+            for i in range(2,int(np.floor(math.sqrt(pr)))+1):  #check numbers from 2 to sqrt(pr)
+                if pr % i == 0:
+                    isPrime = False  #if remaining is 0 pr is not a prime number
+                    break
+            if isPrime:
+                primes.append(pr) #adding prime to the list
+            else:
+                isPrime = True
+            pr += 1
+        return primes, pr #returns array of prime numbers and the smooth boundary B
+\end{verbatim}
+
+The next step is to construct the binary matrix which is done with the following function:
+
+\begin{verbatim}
+    binaryMatrix, parameters, r, remainders, remainderDecompositions = ...
+                                         ...createBinaryMatrix(numberToFactorize,factorbase)
+\end{verbatim}
+
+The matrix is created row by row by obtaining candidates r which will hopefully meet that $r^2 mod N$ is B-smooth. The number r is chosen with the provided function with some k and j obtained from a simple function \textbf{\textit{getNextPair}} which receives a pair (k,j) and returns another one. Then, $r^2 mod N$ is calculated and the prime factors are found by using a function called \textit{\textbf{findFactors}}. This functions goes through the primes in the factor base and returns the ones for which the reminder of it and the input number is 0. The function also returns a variable which informs if the number is B smooth or not and the corresponding binary row of the matrix, if the smooth variable is true the row is added to the matrix, these steps are repeated until the matrix reaches the desired size.  
+
+\begin{verbatim}
+# This functions create a binary matrix with  len(factorbase)+2  rows.
+def createBinaryMatrix(numberToFactorize,factorbase) :
+    binaryMatrix = np.array([])
+    parameters = []
+    numbers = []
+    remainders = []
+    remainderDecompositions = []
+    
+    numberOfBinaryRowsNeeded = len(factorbase) + 4
+    
+    parameterPair = (0,0)
+
+    # Until enough rows are included in the binary matrix
+    while binaryMatrix.shape[0] < numberOfBinaryRowsNeeded : 
+    
+        # Test if the next number is smooth
+        parameterPair = getNextPair(parameterPair)
+        candidate = int(np.floor(math.sqrt(parameterPair[0]*numberToFactorize)) + parameterPair[1])
+        remainder = candidate**2 % numberToFactorize
+        factors,isRemainderSmooth,binaryRow = findFactors(remainder,factorbase)
+        if not isRemainderSmooth :
+            continue
+    
+        # Test if the binary row is already in the binary matrix
+        if len(binaryMatrix) > 0 and (np.any(np.all(binaryMatrix == binaryRow, axis=1))):
+            continue            # add row if not already there 
+    
+        if len(binaryMatrix) == 0:
+            binaryMatrix = np.array([binaryRow])
+        else :
+            binaryMatrix = np.vstack((binaryMatrix,binaryRow))
+    
+        parameters.append(parameterPair)
+        numbers.append(candidate)
+        remainders.append(remainder)
+        remainderDecompositions.append(factors)
+    return binaryMatrix, parameters, numbers, remainders, remainderDecompositions
+\end{verbatim}
+
+The next step is to solve the equation x.M = 0 in mod 2:
+\begin{verbatim}
+    solutions = solveEquation(binaryMatrix)
+\end{verbatim}
+
+This function provides several solutions to the above equation. 
+\todo[inline]{explain solveequation}
+
+\begin{verbatim}
+
+# This function return several different solutions to the equation M^T * x = 0 where sz(M) = (F+2,F)
+def solveEquation(binaryMatrix):
+    linearCombinations = np.eye(binaryMatrix.shape[0])
+    indexLastFrozenRow = -1
+    indexCurrentPrime = 0
+    
+    while indexCurrentPrime < binaryMatrix.shape[1] :
+    # Find a row that is not frozen and has 1 as value for the current prime and place 
+    it under the last frozen row and freeze it
+    # (if no row coresponds then skip the next step and increase the index of the current prime)
+        for rowIndex in range(indexLastFrozenRow+1,binaryMatrix.shape[0]) :
+            if binaryMatrix[rowIndex][indexCurrentPrime] == 1 :
+                break
+            if binaryMatrix[rowIndex][indexCurrentPrime] != 1 :
+                indexCurrentPrime += 1
+                continue
+    
+        tmp = binaryMatrix[indexLastFrozenRow+1].copy()
+        binaryMatrix[indexLastFrozenRow+1] = binaryMatrix[rowIndex].copy()
+        binaryMatrix[rowIndex] = tmp.copy()
+    
+        tmp = linearCombinations[indexLastFrozenRow+1].copy()
+        linearCombinations[indexLastFrozenRow+1] = linearCombinations[rowIndex].copy()
+        linearCombinations[rowIndex] = tmp.copy()
+    
+        indexLastFrozenRow += 1
+    
+        # For all the the none frozen rows, if they have 1 as value for the current prime 
+        then add the last frozen row to it
+        for rowIndex in range(indexLastFrozenRow+1,binaryMatrix.shape[0]) :
+            if binaryMatrix[rowIndex][indexCurrentPrime] == 1 :
+                binaryMatrix[rowIndex] += binaryMatrix[indexLastFrozenRow].copy()
+                binaryMatrix[rowIndex] %= 2
+                linearCombinations[rowIndex] += linearCombinations[indexLastFrozenRow].copy()
+    
+    solutions = linearCombinations[indexLastFrozenRow+1:binaryMatrix.shape[0]]%2
+    return solutions
+\end{verbatim}
+
+Finally we obtain the results and check whether the obtained results provided the factorization numbers, this is $gcd(result,N) \neq 1 \neq N$.
+
+\todo[inline]{finish}
+
+\begin{verbatim}
+    xList, xDecompositionList, xSquaredList, ySquaredList, ySquaredDecompositionList, yList ...
+                          ...= extractResults(solutions, r, remainders, remainderDecompositions)
+\end{verbatim}
+
+
+
+The results for some of the test numbers provided and the objective number can be seen in \ref{tab:results}
+
+\begin{table}[h]
+    \centering
+    \begin{tabular}{|c|c|c|}
+    \hline
+        Number       & Factorization   & Time \\ \hline \hline
+        323          &  17 . 19        &      \\ \hline
+        307561       & 457 . 673       &       \\ \hline
+        31741649     & 4621 . 6869     &       \\ \hline
+        3205837387   & 46819 . 68473   &       \\ \hline
+        392742364277 & 534571 . 734687 &       \\ \hline
+        248163779253588348739117 &     &        \\
+    \hline
+    \end{tabular}
+    \caption{Results for the test numbers as well as the time taken for each factorization}
+    \label{tab:results}
+\end{table}
+
+\todo[inline]{add times and last result}
+
+
+
+
+% \subsection{Exercise 4}
 
 \section{Appendix}
 
