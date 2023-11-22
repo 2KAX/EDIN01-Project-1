@@ -1,6 +1,8 @@
 import argparse
+import time
 import numpy as np
 from tabulate import tabulate
+from math import sqrt
 
 
 
@@ -9,7 +11,7 @@ def getPrimes(F):  #Function to obtain the elements in F, get the first F prime 
 	pr = 2  #pr: candidate prime number, starting with 2
 	isPrime = True
 	while len(primes) < F: #while we have less than F numbers
-		for i in range(2,int(np.floor(np.sqrt(pr)))+1):  #check numbers from 2 to √pr
+		for i in range(2,int(np.floor(sqrt(pr)))+1):  #check numbers from 2 to √pr
 			if pr % i == 0:
 				isPrime = False  #if remaining is 0 pr is not a prime number
 				break
@@ -76,7 +78,7 @@ def createBinaryMatrix(numberToFactorize,factorbase) :
 
 		# Test if the next number is smooth
 		parameterPair = getNextPair(parameterPair)
-		candidate = int(np.floor(np.sqrt(parameterPair[0]*numberToFactorize)) + parameterPair[1])
+		candidate = int(np.floor(sqrt(parameterPair[0]*numberToFactorize)) + parameterPair[1])
 		remainder = candidate**2 % numberToFactorize
 		factors,isRemainderSmooth,binaryRow = findFactors(remainder,factorbase)
 		if not isRemainderSmooth :
@@ -104,23 +106,24 @@ def createBinaryMatrix(numberToFactorize,factorbase) :
 def solveEquation(binaryMatrix):
 	# This function return several different solutions to the equation M^T * x = 0 where sz(M) = (F+2,F)
 	
-	linearCombinations = np.eye(binaryMatrix.shape[0])
+	linearCombinations = np.eye(binaryMatrix.shape[0], dtype=int)
+	workingCopyBinaryMatrix = binaryMatrix.copy()
 	indexLastFrozenRow = -1
 	indexCurrentPrime = 0
 
-	while indexCurrentPrime < binaryMatrix.shape[1] :
+	while indexCurrentPrime < workingCopyBinaryMatrix.shape[1] :
 		# Find a row that is not frozen and has 1 as value for the current prime and place it under the last frozen row and freeze it
 		# (if no row coresponds then skip the next step and increase the index of the current prime)
-		for rowIndex in range(indexLastFrozenRow+1,binaryMatrix.shape[0]) :
-			if binaryMatrix[rowIndex][indexCurrentPrime] == 1 :
+		for rowIndex in range(indexLastFrozenRow+1,workingCopyBinaryMatrix.shape[0]) :
+			if workingCopyBinaryMatrix[rowIndex][indexCurrentPrime] == 1 :
 				break
-		if binaryMatrix[rowIndex][indexCurrentPrime] != 1 :
+		if workingCopyBinaryMatrix[rowIndex][indexCurrentPrime] != 1 :
 			indexCurrentPrime += 1
 			continue
 
-		tmp = binaryMatrix[indexLastFrozenRow+1].copy()
-		binaryMatrix[indexLastFrozenRow+1] = binaryMatrix[rowIndex].copy()
-		binaryMatrix[rowIndex] = tmp.copy()
+		tmp = workingCopyBinaryMatrix[indexLastFrozenRow+1].copy()
+		workingCopyBinaryMatrix[indexLastFrozenRow+1] = workingCopyBinaryMatrix[rowIndex].copy()
+		workingCopyBinaryMatrix[rowIndex] = tmp.copy()
 
 		tmp = linearCombinations[indexLastFrozenRow+1].copy()
 		linearCombinations[indexLastFrozenRow+1] = linearCombinations[rowIndex].copy()
@@ -129,13 +132,13 @@ def solveEquation(binaryMatrix):
 		indexLastFrozenRow += 1
 
 		# For all the the none frozen rows, if they have 1 as value for the current prime then add the last frozen row to it
-		for rowIndex in range(indexLastFrozenRow+1,binaryMatrix.shape[0]) :
-			if binaryMatrix[rowIndex][indexCurrentPrime] == 1 :
-				binaryMatrix[rowIndex] += binaryMatrix[indexLastFrozenRow].copy()
-				binaryMatrix[rowIndex] %= 2
+		for rowIndex in range(indexLastFrozenRow+1,workingCopyBinaryMatrix.shape[0]) :
+			if workingCopyBinaryMatrix[rowIndex][indexCurrentPrime] == 1 :
+				workingCopyBinaryMatrix[rowIndex] += workingCopyBinaryMatrix[indexLastFrozenRow].copy()
+				workingCopyBinaryMatrix[rowIndex] %= 2
 				linearCombinations[rowIndex] += linearCombinations[indexLastFrozenRow].copy()
 
-	solutions = linearCombinations[indexLastFrozenRow+1:binaryMatrix.shape[0]]%2
+	solutions = linearCombinations[indexLastFrozenRow+1:workingCopyBinaryMatrix.shape[0]]%2
 	return solutions
 
 def extractResults(solutions, r, remainders, remainderDecompositions) :
@@ -236,4 +239,10 @@ if __name__ == "__main__":
 
 	print("Running the factorization program on N = " + str(N))
 
+	startTime = time.time()
+
 	print(factorize(N, F, showSteps))
+
+	endTime = time.time()
+
+	print("this process took : " + str(endTime - startTime) + " s")
