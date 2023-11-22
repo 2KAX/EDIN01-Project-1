@@ -189,42 +189,44 @@ This function provides several linear combinations of rows that are solutions to
 
 \begin{verbatim}
 
-# This function return several different solutions to the equation M^T * x = 0 where sz(M) = (F+2,F)
-def solveEquation(binaryMatrix):
-    	linearCombinations = np.eye(binaryMatrix.shape[0], dtype=int)
-	workingCopyBinaryMatrix = binaryMatrix.copy()
-	indexLastFrozenRow = -1
-	indexCurrentPrime = 0
+    # This function return several different solutions to the equation M^T * x = 0 where sz(M)=(F+2,F)
+    def solveEquation(binaryMatrix):
+        linearCombinations = np.eye(binaryMatrix.shape[0], dtype=int)
+        workingCopyBinaryMatrix = binaryMatrix.copy()
+        indexLastFrozenRow = -1
+        indexCurrentPrime = 0
 
-	while indexCurrentPrime < workingCopyBinaryMatrix.shape[1] :
-		# Find a row that is not frozen and has 1 as value for the current prime and place it under the last frozen row and freeze it
-		# (if no row coresponds then skip the next step and increase the index of the current prime)
-		for rowIndex in range(indexLastFrozenRow+1,workingCopyBinaryMatrix.shape[0]) :
-			if workingCopyBinaryMatrix[rowIndex][indexCurrentPrime] == 1 :
-				break
-		if workingCopyBinaryMatrix[rowIndex][indexCurrentPrime] != 1 :
-			indexCurrentPrime += 1
-			continue
-
-		tmp = workingCopyBinaryMatrix[indexLastFrozenRow+1].copy()
-		workingCopyBinaryMatrix[indexLastFrozenRow+1] = workingCopyBinaryMatrix[rowIndex].copy()
-		workingCopyBinaryMatrix[rowIndex] = tmp.copy()
-
-		tmp = linearCombinations[indexLastFrozenRow+1].copy()
-		linearCombinations[indexLastFrozenRow+1] = linearCombinations[rowIndex].copy()
-		linearCombinations[rowIndex] = tmp.copy()
-
-		indexLastFrozenRow += 1
-
-		# For all the the none frozen rows, if they have 1 as value for the current prime then add the last frozen row to it
-		for rowIndex in range(indexLastFrozenRow+1,workingCopyBinaryMatrix.shape[0]) :
-			if workingCopyBinaryMatrix[rowIndex][indexCurrentPrime] == 1 :
-				workingCopyBinaryMatrix[rowIndex] += workingCopyBinaryMatrix[indexLastFrozenRow].copy()
-				workingCopyBinaryMatrix[rowIndex] %= 2
-				linearCombinations[rowIndex] += linearCombinations[indexLastFrozenRow].copy()
-
-	solutions = linearCombinations[indexLastFrozenRow+1:workingCopyBinaryMatrix.shape[0]]%2
-	return solutions
+        # Find a row that is not frozen and has 1 as value for the current prime and place it under 
+        # the last frozen row and freeze it
+        # (if no row coresponds then skip the next step and increase the index of the current prime)
+        while indexCurrentPrime < workingCopyBinaryMatrix.shape[1] :
+            for rowIndex in range(indexLastFrozenRow+1,workingCopyBinaryMatrix.shape[0]) :
+                if workingCopyBinaryMatrix[rowIndex][indexCurrentPrime] == 1 :
+                    break
+            if workingCopyBinaryMatrix[rowIndex][indexCurrentPrime] != 1 :
+                indexCurrentPrime += 1
+                continue
+        
+            tmp = workingCopyBinaryMatrix[indexLastFrozenRow+1].copy()
+            workingCopyBinaryMatrix[indexLastFrozenRow+1] = workingCopyBinaryMatrix[rowIndex].copy()
+            workingCopyBinaryMatrix[rowIndex] = tmp.copy()
+        
+            tmp = linearCombinations[indexLastFrozenRow+1].copy()
+            linearCombinations[indexLastFrozenRow+1] = linearCombinations[rowIndex].copy()
+            linearCombinations[rowIndex] = tmp.copy()
+        
+            indexLastFrozenRow += 1
+        
+            # For all the the none frozen rows, if they have 1 as value for the current 
+            # prime then add the last frozen row to it
+            for rowIndex in range(indexLastFrozenRow+1,workingCopyBinaryMatrix.shape[0]) :
+                if workingCopyBinaryMatrix[rowIndex][indexCurrentPrime] == 1 :
+                    workingCopyBinaryMatrix[rowIndex] += workingCopyBinaryMatrix[indexLastFrozenRow].copy()
+                    workingCopyBinaryMatrix[rowIndex] %= 2
+                    linearCombinations[rowIndex] += linearCombinations[indexLastFrozenRow].copy()
+        
+        solutions = linearCombinations[indexLastFrozenRow+1:workingCopyBinaryMatrix.shape[0]]%2
+        return solutions
 \end{verbatim}
 
 Finally we extract the values corresponding to the equation $x^2 = y^2 \text{ mod } n$ and check whether values for $x-y$ can be used to recover the factorization for our number $N$, this is true if $gcd(x-y,N) \neq 1 \neq N$.
@@ -236,13 +238,13 @@ Finally we extract the values corresponding to the equation $x^2 = y^2 \text{ mo
 
 
 
-The results for some of the test numbers provided and the objective number can be seen in \ref{tab:results}
+The results for some of the test numbers provided and the objective number can be seen in Table \ref{tab:results}
 
 \begin{table}[h]
     \centering
     \begin{tabular}{|c|c|c|}
     \hline
-        Number       & Factorization   & Time       \\ \hline \hline
+        \textbf{Number}       & \textbf{Factorization}   & \textbf{Time }      \\ \hline \hline
         323          & 17 . 19         & 0.3 s     \\ \hline
         307561       & 457 . 673       & 1.2 s     \\ \hline
         31741649     & 4621 . 6869     & 1.3 s     \\ \hline
